@@ -1,5 +1,8 @@
 package com.smartqueue.task_service.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -16,7 +19,6 @@ public class RabbitMQConfig {
     public static final String ROUTING_KEY_HIGH   = "task.high";
     public static final String ROUTING_KEY_NORMAL = "task.normal";
 
-    // Queues
     @Bean
     public Queue highPriorityQueue() {
         return QueueBuilder.durable(TASK_QUEUE_HIGH).build();
@@ -27,13 +29,11 @@ public class RabbitMQConfig {
         return QueueBuilder.durable(TASK_QUEUE_NORMAL).build();
     }
 
-    // Exchange
     @Bean
     public DirectExchange taskExchange() {
         return new DirectExchange(TASK_EXCHANGE);
     }
 
-    // Bindings
     @Bean
     public Binding highPriorityBinding() {
         return BindingBuilder
@@ -50,10 +50,12 @@ public class RabbitMQConfig {
                 .with(ROUTING_KEY_NORMAL);
     }
 
-    // JSON Message Converter
     @Bean
     public Jackson2JsonMessageConverter messageConverter() {
-        return new Jackson2JsonMessageConverter();
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        return new Jackson2JsonMessageConverter(objectMapper);
     }
 
     @Bean
